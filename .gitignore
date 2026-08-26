@@ -1,0 +1,13 @@
+﻿venv/
+__pycache__/
+*.pyc
+data/train/*
+data/test/*
+!data/train/.gitkeep
+!data/test/.gitkeep
+saved_models/*.pt
+outputs/*.png
+outputs/*.csv
+outputs/*.txt
+temp_upload.jpg
+.DS_Store
