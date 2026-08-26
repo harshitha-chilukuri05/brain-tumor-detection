@@ -13,7 +13,7 @@ medical device and should never be used for real diagnosis.
 
 ## Why this project
 
-Medical imaging is a strong portfolio choice because it forces you to
+Medical imaging is a strong choice because it forces you to
 handle real challenges beyond "train a model, report accuracy":
 - Class imbalance and small dataset sizes (transfer learning, not training from scratch)
 - High-stakes predictions, where **interpretability matters** (Grad-CAM)
@@ -23,33 +23,31 @@ handle real challenges beyond "train a model, report accuracy":
 ---
 
 ## Project structure
-
-```
 brain-tumor-detection/
 ├── README.md
 ├── requirements.txt
-├── data/                      # populated after you download the dataset (see below)
-│   ├── train/
-│   │   ├── glioma/
-│   │   ├── meningioma/
-│   │   ├── notumor/
-│   │   └── pituitary/
-│   └── test/
-│       ├── glioma/
-│       ├── meningioma/
-│       ├── notumor/
-│       └── pituitary/
+├── data/ # populated after you download the dataset (see below)
+│ ├── train/
+│ │ ├── glioma/
+│ │ ├── meningioma/
+│ │ ├── notumor/
+│ │ └── pituitary/
+│ └── test/
+│ ├── glioma/
+│ ├── meningioma/
+│ ├── notumor/
+│ └── pituitary/
 ├── src/
-│   ├── dataset.py             # data loading + transforms
-│   ├── model.py                # ResNet-18 model definition
-│   ├── train.py                 # training loop
-│   ├── evaluate.py             # test-set evaluation + confusion matrix
-│   └── predict.py              # single-image inference + Grad-CAM
+│ ├── dataset.py # data loading + transforms
+│ ├── model.py # ResNet-18 model definition
+│ ├── train.py # training loop
+│ ├── evaluate.py # test-set evaluation + confusion matrix
+│ └── predict.py # single-image inference + Grad-CAM
 ├── app/
-│   └── app.py                  # Streamlit demo app
-├── saved_models/               # trained checkpoints saved here
-└── outputs/                    # plots, logs, reports saved here
-```
+│ └── app.py # Streamlit demo app
+├── saved_models/ # trained checkpoints saved here
+└── outputs/ # plots, logs, reports saved here
+
 
 ---
 
@@ -84,19 +82,18 @@ kaggle datasets download -d masoudnickparvar/brain-tumor-mri-dataset -p data --u
 2. Download and unzip it
 3. Arrange it so you end up with this structure (rename folders if needed):
 
-```
 data/
 ├── train/
-│   ├── glioma/
-│   ├── meningioma/
-│   ├── notumor/
-│   └── pituitary/
+│ ├── glioma/
+│ ├── meningioma/
+│ ├── notumor/
+│ └── pituitary/
 └── test/
-    ├── glioma/
-    ├── meningioma/
-    ├── notumor/
-    └── pituitary/
-```
+├── glioma/
+├── meningioma/
+├── notumor/
+└── pituitary/
+
 
 **Using your own dataset instead:** any dataset organized as
 `data/train/<class_name>/*.jpg` and `data/test/<class_name>/*.jpg` will
@@ -136,13 +133,40 @@ Produces:
 - `outputs/classification_report.txt` — precision/recall/F1 per class
 - `outputs/confusion_matrix.png` — visual confusion matrix
 
-**Fill this in with your actual results once trained:**
+**Results (test set, n=1289):**
 
 | Metric | Score |
 |---|---|
-| Test Accuracy | _e.g. 0.9X_ |
-| Macro F1 | _e.g. 0.9X_ |
-| Weakest class | _e.g. meningioma (most visually similar to glioma)_ |
+| Test Accuracy | 0.9860 |
+| Macro F1 | 0.9691 |
+| Weighted F1 | 0.9855 |
+| Weakest class | glioma (0.90 F1 — see below) |
+
+**Per-class breakdown:**
+
+| Class | Precision | Recall | F1-score | Support |
+|---|---|---|---|---|
+| glioma | 1.0000 | 0.8202 | 0.9012 | 89 |
+| meningioma | 0.9731 | 0.9950 | 0.9839 | 400 |
+| notumor | 0.9877 | 1.0000 | 0.9938 | 400 |
+| pituitary | 0.9950 | 1.0000 | 0.9975 | 400 |
+
+**What the numbers actually show:** three of the four classes are
+near-perfect (F1 > 0.98). Glioma is the outlier — recall of only 0.82
+means the model misses about 18% of real glioma cases, most likely
+misclassifying them as meningioma, since those two tumor types are the
+ones radiologists themselves most commonly confuse on certain MRI slices.
+Notably, glioma *precision* is a perfect 1.0000: when the model predicts
+glioma, it's always right — so the model is conservative on this class
+rather than over-predicting it. Two likely contributing factors: (1) the
+glioma test set is much smaller (89 samples vs. 400 for the other
+classes), making recall more sensitive to a handful of misclassifications,
+and (2) visual similarity between glioma and meningioma on 2D MRI slices.
+
+In a clinical framing, this is a meaningful limitation worth stating
+plainly: missing a real tumor (false negative) is generally more costly
+than a false alarm, so glioma recall — not overall accuracy — is the
+number that matters most here, and it's the model's clearest weak point.
 
 Being specific about *where* the model struggles (which classes get
 confused, and a plausible reason why) is exactly the kind of detail that
@@ -178,9 +202,12 @@ of for your resume or LinkedIn post.
 - **Talk about the transfer learning decision.** Why ResNet-18 and not
   training from scratch? (Small dataset, limited compute, ImageNet features
   transfer well to texture/edge-heavy medical images.)
-- **Talk about the confusion matrix, not just accuracy.** Which classes get
-  confused with each other, and why that makes sense visually (e.g. glioma
-  vs. meningioma can look similar on certain slices).
+- **Talk about the confusion matrix, not just accuracy.** This model hits
+  98.6% overall accuracy, but glioma recall is only 0.82 — it's the one
+  class the model meaningfully struggles with, most likely confused with
+  meningioma. Leading with that nuance instead of just "98.6% accuracy"
+  is a much stronger interview answer, because it shows you looked past
+  the headline number.
 - **Talk about Grad-CAM.** It shows you think about trust and
   interpretability in high-stakes domains — a genuinely differentiating
   detail most portfolio projects skip.
@@ -194,6 +221,10 @@ of for your resume or LinkedIn post.
 
 ## Possible extensions (good "future work" talking points)
 
+- **Close the glioma recall gap**: try class-weighted loss (upweighting
+  glioma) or oversampling during training, since the current gap is
+  likely driven partly by glioma having ~4.5x fewer training samples than
+  the other three classes
 - Swap ResNet-18 for a larger backbone (ResNet-50, EfficientNet) and compare
 - Add k-fold cross-validation for more robust metrics
 - Try a segmentation model (e.g. U-Net) to localize tumor boundaries, not
